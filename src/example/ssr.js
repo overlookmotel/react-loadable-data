@@ -10,13 +10,13 @@ const LoadableData = require('../');
 const App = require('./app');
 
 // Run
-render(App).then(res => {
+renderComponent(App).then(res => {
 	console.log('done!');
 	console.log('data:', res.data);
 	console.log('html:', res.html);
 });
 
-function render(Component, props) {
+function renderComponent(Component, props) {
 	const data = [], promises = [];
 
 	console.log('creating element');
@@ -26,6 +26,10 @@ function render(Component, props) {
 		</LoadableData.ServerProvider>
 	);
 
+	return renderElement(element, data, promises).then(html => ({html, data}));
+}
+
+function renderElement(element, data, promises) {
 	return next(true);
 
 	function next(first) {
@@ -36,9 +40,8 @@ function render(Component, props) {
 
 		if (promises.length == 0) {
 			console.log('complete:', {data, promises});
-			const res = {html, data};
-			if (first) return Promise.resolve(res);
-			return res;
+			if (first) return Promise.resolve(html);
+			return html;
 		}
 
 		return Promise.all(promises).then(() => {

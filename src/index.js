@@ -58,7 +58,7 @@ class LoadableDataComponent extends React.Component {
 	}
 
 	_load() {
-		console.log('loading!');
+		//console.log('loading!');
 
 		this.setState({loading: true});
 
