@@ -17,7 +17,7 @@ renderComponent(App).then(res => {
 });
 
 function renderComponent(Component, props) {
-	const data = [], promises = [];
+	const data = {}, promises = [];
 
 	console.log('creating element');
 	const element = (

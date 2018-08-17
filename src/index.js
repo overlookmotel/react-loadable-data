@@ -23,7 +23,7 @@ class LoadableDataComponent extends React.Component {
 		super(props);
 
 		// Get data from cache if it's there
-		const {loaded, data} = props.context.getData();
+		const {loaded, data} = props.context.getData(props.name);
 
 		// Client side or server-side and data not loaded yet
 		this.state = {
@@ -63,11 +63,11 @@ class LoadableDataComponent extends React.Component {
 		this.setState({loading: true});
 
 		// Run loader
-		const {loader, context, props} = this.props;
-		let promise = loader(props);
+		const {loader, context, props: parentProps, name} = this.props;
+		let promise = loader(parentProps);
 
 		// Report promise
-		promise = context.report(promise);
+		promise = context.report(promise, name);
 
 		// Update state once loaded
 		promise.then(
@@ -119,10 +119,20 @@ class LoadableDataComponent extends React.Component {
  * @param {React.Component} options.component - Component to render when loaded
  * @param {string} [options.dataPropName='data'] - Prop name to provide data on to component
  */
+
+let counter = 0;
+
 function LoadableData(options) {
 	const {loader, component} = options; // jshint ignore:line
 	let {Loading} = options;
 	if (!Loading) Loading = () => null;
+
+	let {name} = options;
+	if (name == null) {
+		name = `_${counter++}`;
+	} else if (typeof name != 'string') {
+		throw new Error('name must be a string if provided');
+	}
 
 	let {dataPropName} = options;
 	if (dataPropName == null) {
@@ -135,6 +145,7 @@ function LoadableData(options) {
 		return <Consumer>
 			{context => (
 				<LoadableDataComponent
+					name={name}
 					loader={loader}
 					Loading={Loading}
 					component={component}
@@ -158,15 +169,18 @@ module.exports = LoadableData;
  * This is to ensure the cached data is only used for initial render.
  *
  * @param {Object} props - Props object
- * @param {Array} [props.data=[]] - Data array (usually filled by server and passed to client)
+ * @param {Object} [props.data={}] - Data object (usually filled by server and passed to client)
  */
 function ClientProvider(props) {
-	const datas = props.data || [];
+	const datas = props.data || {};
 
 	const context = {
-		getData: () => {
-			if (datas.length == 0) return {loaded: false, data: null};
-			return {loaded: true, data: datas.shift()};
+		getData: name => {
+			const data = datas[name];
+			if (!data) return {loaded: false, data: null};
+
+			delete datas[name];
+			return {loaded: true, data};
 		},
 		report: promise => promise
 	};
@@ -188,7 +202,7 @@ LoadableData.ClientProvider = ClientProvider;
  * state updates (unless since this is rendering on server).
  *
  * @param {Object} props - Props object
- * @param {Array} [props.data=[]] - Data array (usually filled by server and passed to client)
+ * @param {Object} [props.data={}] - Data object (usually filled by server and passed to client)
  * @param {Array} [props.promises=[]] - Promises array (must be provided empty)
  */
 const fakePromise = {
@@ -196,28 +210,23 @@ const fakePromise = {
 };
 
 function ServerProvider(props) {
-	const datas = props.data || [],
+	const datas = props.data || {},
 		promises = props.promises || [];
 
 	if (promises.length > 0) throw new Error('Promises array must be empty');
 
-	const datasLength = datas.length;
-
-	let getIndex = 0, reportIndex = 0;
-
 	const context = {
 		getData: name => {
-			if (getIndex >= datasLength) return {loaded: false, data: null};
-			return {loaded: true, data: datas[getIndex++]};
+			const data = datas[name];
+			if (!data) return {loaded: false, data: null};
+			return {loaded: true, data};
 		},
-		report: promise => {
-			const index = reportIndex++;
-
+		report: (promise, name) => {
 			// Add promise to array
-			// When promise resolves, fetched data is added to data array
+			// When promise resolves, fetched data is added to data object
 			promise = promise.then(data => {
 				// Save to datas
-				datas[index + datasLength] = data;
+				datas[name] = data;
 
 				// Remove promise from array
 				promises.splice(promises.indexOf(promise), 1);
