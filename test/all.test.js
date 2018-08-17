@@ -8,7 +8,7 @@
 // Modules
 const chai = require('chai'),
 	{expect} = chai,
-	LoadableData = require('../lib/');
+	LoadableData = require('../');
 
 // Init
 chai.config.includeStack = true;

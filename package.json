@@ -2,7 +2,7 @@
   "name": "react-loadable-data",
   "version": "0.0.0",
   "description": "React component to load data",
-  "main": "./lib/",
+  "main": "index.js",
   "author": {
     "name": "Overlook Motel"
   },
@@ -16,12 +16,19 @@
   "dependencies": {
   },
   "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-react": "^6.24.1",
     "chai": "^4.1.2",
     "coveralls": "^3.0.2",
     "cross-env": "^5.2.0",
     "istanbul": "^0.4.5",
     "jshint": "^2.9.5",
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "react": "^16.4.2"
+  },
+  "peerDependencies": {
+    "react": "^16.3.0"
   },
   "keywords": [
     "react",
@@ -34,8 +41,10 @@
     "render"
   ],
   "scripts": {
-    "test": "npm run jshint && npm run test-main",
-    "jshint": "jshint lib test",
+    "build": "babel src -d lib",
+    "prepublish": "npm build",
+    "test": "npm build && npm run jshint && npm run test-main",
+    "jshint": "jshint src test",
     "test-main": "mocha --check-leaks --colors -t 1000 -R spec \"test/**/*.test.js\"",
     "cover": "npm run cover-main && rm -rf coverage",
     "coveralls": "npm run cover-main && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
