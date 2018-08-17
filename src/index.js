@@ -26,17 +26,17 @@ class LoadableDataComponent extends React.Component {
 		const {loaded, data} = props.context.getData(props.name);
 
 		// Client side or server-side and data not loaded yet
+		this.loading = false;
 		this.state = {
 			data,
 			error: null,
-			loaded,
-			loading: false
+			loaded
 		};
 	}
 
 	componentWillMount() {
 		this._mounted = true;
-		if (this.state.loading || this.state.loaded) return;
+		if (this.loading || this.state.loaded) return;
 		this._load();
 	}
 
@@ -45,13 +45,12 @@ class LoadableDataComponent extends React.Component {
 	}
 
 	load() {
-		if (this.state.loading) return;
+		if (this.loading) return;
 
 		this.setState({
 			data: null,
 			error: null,
-			loaded: false,
-			loading: false
+			loaded: false
 		});
 
 		this._load();
@@ -60,7 +59,7 @@ class LoadableDataComponent extends React.Component {
 	_load() {
 		//console.log('loading!');
 
-		this.setState({loading: true});
+		this.loading = true;
 
 		// Run loader
 		const {loader, context, parentProps, name} = this.props;
@@ -79,10 +78,10 @@ class LoadableDataComponent extends React.Component {
 	_loaded(data) {
 		if (!this._mounted) return;
 
+		this.loading = false;
 		this.setState({
 			data,
 			error: null,
-			loading: false,
 			loaded: true
 		});
 	}
@@ -90,27 +89,25 @@ class LoadableDataComponent extends React.Component {
 	_errored(err) {
 		if (!this._mounted) return;
 
+		this.loading = false;
 		this.setState({
 			data: null,
 			error: err,
-			loading: false,
 			loaded: false
 		});
 	}
 
 	render() {
 		const {state, props} = this;
-		if (state.loading || state.error) {
-			return <props.Loading loading={state.loading} error={state.error}/>;
-		} else if (state.loaded) {
+		if (!state.loaded) {
+			return <props.Loading error={state.error}/>;
+		} else {
 			const componentProps = Object.assign(
 				{},
 				props.parentProps,
 				{[props.dataPropName]: state.data}
 			);
 			return <props.component {...componentProps}/>;
-		} else {
-			return null;
 		}
 	}
 }
