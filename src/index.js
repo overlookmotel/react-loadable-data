@@ -63,7 +63,7 @@ class LoadableDataComponent extends React.Component {
 		this.setState({loading: true});
 
 		// Run loader
-		const {loader, context, props: parentProps, name} = this.props;
+		const {loader, context, parentProps, name} = this.props;
 		let promise = loader(parentProps);
 
 		// Report promise
@@ -103,7 +103,11 @@ class LoadableDataComponent extends React.Component {
 		if (state.loading || state.error) {
 			return <props.Loading loading={state.loading} error={state.error}/>;
 		} else if (state.loaded) {
-			const componentProps = Object.assign({}, props.props, {[props.dataPropName]: state.data});
+			const componentProps = Object.assign(
+				{},
+				props.parentProps,
+				{[props.dataPropName]: state.data}
+			);
 			return <props.component {...componentProps}/>;
 		} else {
 			return null;
@@ -150,7 +154,7 @@ function LoadableData(options) {
 					Loading={Loading}
 					component={component}
 					dataPropName={dataPropName}
-					props={props}
+					parentProps={props}
 					context={context}
 				/>
 			)}
